@@ -1,4 +1,3 @@
-from email import utils
 from typing_extensions import Self
 from sql import SQLManager
 from utilities import Utilities as utils
