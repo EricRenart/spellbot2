@@ -1,3 +1,4 @@
+from datetime import datetime
 import sqlite3
 import config
 import logging
@@ -41,18 +42,31 @@ class SQLManager:
         all_data = self._query(f"SELECT * FROM {self.master_table_name}", fetch_results=True)
         return len(all_data)
     
-    def _query(self, qry, commit=False, fetch=True, fetch_rows=0):
+    def _query(self, qry, commit=False, fetch=True, fetch_rows=0, timeme=True):
         """
         Runs a query on the db
         :param qry: SQL query string to run
         :param commit: Whether to commit query
         :param fetch: Whether to return results after running query. Default True.
         :param fetch_rows: How many rows of data to return if fetch=True. If 0, return all rows. Default 0.
+        :param timeme: Whether to log execution time of query
         :return: data rows, if fetch=True 
         """
-        # execute query
-        logging.info(f"Executing SQL3 query on {self.db_filename}:\n{qry}\n")
+        t1, t2, dt = None
+        logging.debug(f"Executing SQL3 query on {self.db_filename}:\n{qry}\n")
+
+        # mark start time
+        if timeme:
+            t1 = datetime.datetime.now()
+        
+        # query
         self.cursor.execute(qry)
+
+        # mark end time and calculate execution time
+        if timeme:
+            t2 = datetime.datetime.now()
+            dt = t2 - t1
+            logging.debug(f"Query took {str(dt)} ms.")
 
         # add to pending queries list
         self.pending_queries.append(qry)
