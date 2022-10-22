@@ -1,4 +1,5 @@
 from .. import sql
+import sqlite3
 
 class SQLTests:
     

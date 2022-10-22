@@ -1,103 +1,76 @@
-from ast import arg
-from keyword import kwlist
-import psycopg2
+import sqlite3
 import config
 import logging
 from utilities import Utilities as utils
 
-TABLE_COLUMNS = {'name': 'varchar(50)',
-                'description': 'varchar(250)',
-                'complete_description': 'varchar(5000)',
-                'components': 'varchar(75)',
-                'range': 'int',
-                'school': 'varchar(15)',
-                'casting_time': 'varchar(10)',
-                'target': 'varchar(50)',
-                'duration': 'varchar(15)',
-                'source': 'varchar(50)',
-                'page': 'int'}
-
+TABLE_COLUMNS = ['name','description','complete_description','components','range',
+'school','casting_time','target','duration','source','page']
 class SQLManager:
 
-    def __init__(self, connect=True, edition='3.5'):
-        # Connection to pgsql database
-        dbconfig = config.get_section('database')
-        self.host = dbconfig.get('host')
-        self.port = dbconfig.get('port')
-        self.dbname = dbconfig.get('dbname')
-        self.user = dbconfig.get('user')
-        self.password = dbconfig.get('password')
-        self.schema = dbconfig.get('schema')
-        self.edition = edition
-        self.master_table_name = f"spellbot2_{self.user}_{self.edition}e"
+    """
+    SQLManager
+    This class manages SQLite3 database instances for spelldb2
+    """
+
+    def __init__(self, connect=True, setup=False, edition='5'):
+        """
+        Create a new instance of this SQL manager.
+        :param connect: Whether to connect to database upon creation. Default True.
+        :param edition: D&D edition to read in spells for. Default 5. This will pull in spells from
+        the relevant sources based on edition.
+        Available values: 3.5, 5
+        :param setup: Whether to load spell data and set up tables upon creation. Default True.
+        :return: SQLManager instance
+        """
+        self.edition = config.ConfigManager.get_section('spells').get('default_edition')
+        if edition != '3.5' or '5':
+            raise ValueError('D&D edition must be 3.5 or 5 in config file.')
+        self.db_filename = f"spellbot2_{self.edition}e.db"
+        self.master_table_name = self.db_filename.rstrip('.db')
         self.tables = [self.master_table_name]
+        self.cursor = None
         if connect:
-            self.connect()
-    
-    def _add_table(self, tablename: str, columns: dict, schema=None, return_results=False):
-        if schema == None:
-            schema = self.schema
-        qry = f"""CREATE TABLE {schema}.{tablename}\n"""
-        for col in columns.keys():
-            # column: dtype
-            qry += f"{col}: {columns.get(col)},\n"
-        qry += ')'
-        self.query(qry, return_results=return_results)
-    
-    def _insert_to_table(self, tablename: str, values: dict, schema=None, return_results=False):
-        if schema == None:
-            schema == self.schema
-        qry = f"""INSERT INTO {schema}.{tablename} {utils.dict_to_sql_values_pair(values)}"""
-        self.query(qry, return_results=return_results)
-    
-    def _drop_table(self, tablename: str, schema=None, cascade=False, return_results=False):
-        if schema == None:
-            schema = self.schema
-        qry = f"""DROP TABLE {schema}.{tablename}"""
-        if cascade:
-            qry += " CASCADE"
-        self.query(qry, return_results=return_results)
+            self.db = sqlite3.connect(self.db_filename)
+            self.cursor = self.db.cursor()
 
-    def connect(self):
-        logging.info(f'Connecting to database {self.dbname}...')
-        self.connection = psycopg2.connect(host=self.host, port=self.port, dbname=self.dbname,\
-            username=self.user, password=self.password)
-        self.cursor = self.connection.cursor()
+    def __len__(self):
+        """
+        Returns the number of rows in the db.
+        """
+        all_data = self._query(f"SELECT * FROM {self.master_table_name}", fetch_results=True)
+        return len(all_data)
     
-    def disconnect(self):
-        logging.info(f"Closing connection to {self.dbname}")
-        self.connection.close()
+    def _query(self, qry, commit=False, fetch=True, fetch_rows=0):
+        """
+        Runs a query on the db
+        :param qry: SQL query string to run
+        :param commit: Whether to commit query
+        :param fetch: Whether to return results after running query. Default True.
+        :param fetch_rows: How many rows of data to return if fetch=True. If 0, return all rows. Default 0.
+        :return: data rows, if fetch=True 
+        """
+        # execute query
+        logging.info(f"Executing SQL3 query on {self.db_filename}:\n{qry}\n")
+        self.cursor.execute(qry)
+
+        # write changes to db
+        if commit:
+            logging.info(f'Committing previous query on {self.db_filename}:\n{qry}\n')
+            self.db.commit()
+        
+        # get query results
+        if fetch:
+            if fetch_rows == 1:
+                # return first row only
+                return self.cursor.fetchone()
+            elif fetch_rows > 1:
+                # fetch the number of rows specified by fetch_rows param
+                return self.cursor.fetchmany(fetch_rows)
+            else:
+                # return all rows
+                return self.cursor.fetchall()
     
-    def add_spell(self, name: str, levels: dict, description: str, long_description: str,
-    casting_time: str, duration: str, range: str, components: str, effect: str, save: str, src: str, src_pg: int,
-    return_results=False):
-        levels_str = utils.levels_dict_to_sql_string(levels)
-        data_dict = dict(TABLE_COLUMNS.keys(),
-                        [name,levels_str,description,long_description,
-                        casting_time,duration,range,components,effect,save,src,src_pg])
-        self._insert_to_table(self.master_table_name, values=data_dict, schema=self.schema, return_results=return_results)
-
-    def query(self, query_string, log=True, return_results=False):
-        if log:
-            logging.debug(f"""Executing query {query_string} on database {self.dbname}""")
-        self.cursor.execute(query_string)
-        if log:
-            logging.debug(f"Query executed")
-            rows = len(self.cursor.fetchall())
-            logging.debug(f"Returned {rows} rows")
-        if return_results:
-            return self.cursor.fetchall()
-    
-    def initial_setup(self):
-        logging.info('Setting up database')
-
-        # Create initial database
-        self.query(f"CREATE DATABASE {self.dbname}")
-
-        # Create user and set permissions
-        self.query(f"CREATE USER {self.user}")
-        self.query(f"""GRANT ALL PRIVILEGES ON {self.dbname} TO {self.user}""")
-
-        # Add initial table
-        logging.info("Creating master table")
-        self._add_table(self.master_table_name, columns=TABLE_COLUMNS, schema=self.schema)
+    def _setup_columns(self):
+        """
+        Sets up initial database tables and columns.
+        """
