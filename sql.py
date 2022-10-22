@@ -28,6 +28,7 @@ class SQLManager:
         self.db_filename = f"spellbot2_{self.edition}e.db"
         self.master_table_name = self.db_filename.rstrip('.db')
         self.tables = [self.master_table_name]
+        self.pending_queries = []
         self.cursor = None
         if connect:
             self.db = sqlite3.connect(self.db_filename)
@@ -53,9 +54,12 @@ class SQLManager:
         logging.info(f"Executing SQL3 query on {self.db_filename}:\n{qry}\n")
         self.cursor.execute(qry)
 
-        # write changes to db
+        # add to pending queries list
+        self.pending_queries.append(qry)
+
+        # commit pending transactions to DB
         if commit:
-            logging.info(f'Committing previous query on {self.db_filename}:\n{qry}\n')
+            logging.info(f'Committing {len(self.pending_queries)} queries to {self.db_filename}')
             self.db.commit()
         
         # get query results
