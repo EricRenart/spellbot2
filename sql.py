@@ -88,9 +88,8 @@ class SQLManager:
     
     def _setup_logging_table(self):
         """
-        Sets up table for logging. If it already exists, drop it and set up a new one
+        Sets up table for logging.
         """
-        self._query(f"DROP TABLE IF EXISTS {self.log_table_name}")
         log_fields = utils.parenthesized_list(LOG_TABLE_COLUMNS)
         self._query(f"CREATE TABLE {self.log_table_name} {log_fields}")
 
@@ -101,5 +100,12 @@ class SQLManager:
         msg_dict = {'datetime': datetime.datetime.now(),
                     'level': level,
                     'message': msg}
-        self._query(f"INSERT INTO {self.log_table_name} {utils.dict_to_sql_values_pair(msg_dict)}")
+        valspair = utils.dict_to_sql_values_pair(msg_dict)
+        self._query(f"INSERT INTO {self.log_table_name} {valspair}")
         
+    def _clear_log_table(self):
+        """
+        Drop logging table and re-creates it.
+        """
+        self._query(f"DROP TABLE {self.log_table_name}")
+        self._setup_logging_table()
