@@ -1,6 +1,7 @@
 import config
 import discord
 import sql
+from log import SDBLog
 import logging
 
 class SpellBot2:

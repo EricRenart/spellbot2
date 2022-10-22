@@ -1,11 +1,15 @@
 from datetime import datetime
 import sqlite3
+from typing_extensions import Self
 import config
-import logging
+from log import SDBLog
+import datetime
 from utilities import Utilities as utils
 
+# list of column names for database tables
 TABLE_COLUMNS = ['name','description','complete_description','components','range',
 'school','casting_time','target','duration','source','page']
+LOG_TABLE_COLUMNS = ['datetime','level','message']
 class SQLManager:
 
     """
@@ -28,8 +32,9 @@ class SQLManager:
             raise ValueError('D&D edition must be 3.5 or 5 in config file.')
         self.db_filename = f"spellbot2_{self.edition}e.db"
         self.master_table_name = self.db_filename.rstrip('.db')
-        self.tables = [self.master_table_name]
-        self.pending_queries = []
+        self.log_table_name = "spellbot2_log"
+        self.tables = [self.master_table_name, self.log_table_name]
+        self.pending_queries = list()
         self.cursor = None
         if connect:
             self.db = sqlite3.connect(self.db_filename)
@@ -53,7 +58,7 @@ class SQLManager:
         :return: data rows, if fetch=True 
         """
         t1, t2, dt = None
-        logging.debug(f"Executing SQL3 query on {self.db_filename}:\n{qry}\n")
+        SDBLog.debug(f"Executing SQL3 query on {self.db_filename}:\n{qry}\n")
 
         # mark start time
         if timeme:
@@ -66,15 +71,16 @@ class SQLManager:
         if timeme:
             t2 = datetime.datetime.now()
             dt = t2 - t1
-            logging.debug(f"Query took {str(dt)} ms.")
+            SDBLog.debug(f"Query took {str(dt)} ms.")
 
         # add to pending queries list
         self.pending_queries.append(qry)
 
         # commit pending transactions to DB
         if commit:
-            logging.info(f'Committing {len(self.pending_queries)} queries to {self.db_filename}')
             self.db.commit()
+            # clear pending query list
+            self.pending_queries = list()
         
         # get query results
         if fetch:
@@ -92,3 +98,28 @@ class SQLManager:
         """
         Sets up initial database tables and columns.
         """
+        SDBLog.info("Setting up master table columns...") # make sure log table is created before this executes
+    
+    def _setup_logging_table(self):
+        """
+        Sets up table for logging.
+        """
+        log_fields = utils.parenthesized_list(LOG_TABLE_COLUMNS)
+        self._query(f"CREATE TABLE {self.log_table_name} {log_fields}")
+
+    def _add_log_message(self, msg, level):
+        """
+        Adds a log message to the logging table with the given log level.
+        """
+        msg_dict = {'datetime': datetime.datetime.now(),
+                    'level': level,
+                    'message': msg}
+        valspair = utils.dict_to_sql_values_pair(msg_dict)
+        self._query(f"INSERT INTO {self.log_table_name} {valspair}")
+        
+    def _clear_log_table(self):
+        """
+        Drop logging table and re-creates it.
+        """
+        self._query(f"DROP TABLE {self.log_table_name}")
+        self._setup_logging_table()

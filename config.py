@@ -11,4 +11,3 @@ class ConfigManager:
     def get_section(self, name):
         if not self.config.has_section(name):
             raise ValueError(f'Section {name} not found in configfile')
-        return self.config.

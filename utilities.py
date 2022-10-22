@@ -1,7 +1,7 @@
 import datetime
 
 class Utilities:
-
+    
     def levels_dict_to_sql_string(levels: dict):
         string = f""
         for lvl in levels.keys():
@@ -19,3 +19,12 @@ class Utilities:
         string = string[-1]
         string += ","
         return string
+    
+    def parenthesized_list(ls: list):
+        ls_str = '('
+        for elem in ls:
+            ls_str += f'{elem},'
+        return f'{ls_str})'
+    
+    def datetime_string():
+        return datetime.datetime.now().strftime('%m/%-d/%Y %H:%M:%S.%f')
