@@ -18,9 +18,10 @@ class SQLManager:
     This class manages SQLite3 database instances for spelldb2
     """
 
-    def __init__(self, connect=True, setup=False, edition='5'):
+    def __init__(self,  db_filename=None, connect=True, setup=False, edition='5'):
         """
         Create a new instance of this SQL manager.
+        :param db_filename: Name of .db file to be created for database. If None, use default name. Default None.
         :param connect: Whether to connect to database upon creation. Default True.
         :param edition: D&D edition to read in spells for. Default 5. This will pull in spells from
         the relevant sources based on edition.
@@ -39,7 +40,7 @@ class SQLManager:
         self.cursor = None
         self.connected = False
         if connect:
-            self.connect()
+            self.connect(db_filename=db_filename)
         if setup:
             self.initial_setup()
 
@@ -50,14 +51,25 @@ class SQLManager:
         all_data = self._query(f"SELECT * FROM {self.master_table_name}", fetch_results=True)
         return len(all_data)
     
-    def connect(self):
+    def connect(self, db_filename=None):
         """
         Opens connection to the SQLite3 database.
+        :param db_filename: .db file to connect to. If None, uses default filename. Default None.
         """
-        SB2Log.info(f'Initiating SQLite3 connection to {self.db_filename}')
-        self.db = sqlite3.connect(self.db_filename)
+
+        # use default filename if None
+        if db_filename == None:
+            db_filename = self.db_filename
+
+        SB2Log.info(f'Initiating SQLite3 connection to {db_filename}')
+        self.db = sqlite3.connect(db_filename)
         self.cursor = self.db.cursor()
         self.connected = True
+
+        # set new db filename in SQLManager if specified
+        if db_filename != None:
+            self.db_filename = db_filename
+
         SB2Log.info(f'Connection to {self.db_filename} established.')
     
     def disconnect(self):
