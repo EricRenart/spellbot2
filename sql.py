@@ -28,7 +28,7 @@ class SQLManager:
         :param setup: Whether to load spell data and set up tables upon creation. Default True.
         :return: SQLManager instance
         """
-        self.edition = config.ConfigManager.get_section('spells').get('default_edition')
+        self.edition = config.ConfigManager.get('spells','default_edition')
         if edition != '3.5' or '5':
             raise ValueError('D&D edition must be 3.5 or 5 in config file.')
         self.db_filename = f"spellbot2_{self.edition}e.db"
@@ -37,6 +37,7 @@ class SQLManager:
         self.tables = [self.master_table_name, self.log_table_name]
         self.pending_transactions = list()
         self.cursor = None
+        self.connected = False
         if connect:
             self.connect()
         if setup:
@@ -56,6 +57,7 @@ class SQLManager:
         SB2Log.info(f'Initiating SQLite3 connection to {self.db_filename}')
         self.db = sqlite3.connect(self.db_filename)
         self.cursor = self.db.cursor()
+        self.connected = True
         SB2Log.info(f'Connection to {self.db_filename} established.')
     
     def disconnect(self):
@@ -65,6 +67,7 @@ class SQLManager:
         SB2Log.info(f'Closing sqlite3 connection to {self.db_filename}')
         self.db.close()
         self.cursor = None
+        self.connected = False
         SB2Log.info(f'Connection closed.')
     
     def _query(self, qry, commit=False, fetch=True, fetch_rows=0, timeme=True):
@@ -80,37 +83,45 @@ class SQLManager:
         t1, t2, dt = None
         SB2Log.debug(f"Executing SQL3 query on {self.db_filename}:\n{qry}\n")
 
-        # mark start time
-        if timeme:
-            t1 = datetime.datetime.now()
+        if self.connected:
+
+            # mark start time
+            if timeme:
+                t1 = datetime.datetime.now()
+            
+            # query
+            self.cursor.execute(qry)
+
+            # mark end time and calculate execution time
+            if timeme:
+                t2 = datetime.datetime.now()
+                dt = t2 - t1
+                SB2Log.debug(f"Query took {str(dt)} ms.")
+
+            # add to pending queries list
+            self.pending_transactions.append(qry)
+
+            # commit pending transactions to DB
+            if commit:
+                self.commit()
+            
+            # get query results
+            if fetch:
+                if fetch_rows == 1:
+                    # return first row only
+                    return self.cursor.fetchone()
+                elif fetch_rows > 1:
+                    # fetch the number of rows specified by fetch_rows param
+                    return self.cursor.fetchmany(fetch_rows)
+                else:
+                    # return all rows
+                    return self.cursor.fetchall()
         
-        # query
-        self.cursor.execute(qry)
-
-        # mark end time and calculate execution time
-        if timeme:
-            t2 = datetime.datetime.now()
-            dt = t2 - t1
-            SB2Log.debug(f"Query took {str(dt)} ms.")
-
-        # add to pending queries list
-        self.pending_transactions.append(qry)
-
-        # commit pending transactions to DB
-        if commit:
-            self.commit()
-        
-        # get query results
-        if fetch:
-            if fetch_rows == 1:
-                # return first row only
-                return self.cursor.fetchone()
-            elif fetch_rows > 1:
-                # fetch the number of rows specified by fetch_rows param
-                return self.cursor.fetchmany(fetch_rows)
-            else:
-                # return all rows
-                return self.cursor.fetchall()
+        else:
+            # raise ConnectionError if connection isn't open
+            err_str = 'Cannot read in data from a closed connection'
+            SB2Log.error(err_str)
+            raise ConnectionError(err_str)
     
     def commit(self):
         """
