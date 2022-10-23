@@ -34,11 +34,10 @@ class SQLManager:
         self.master_table_name = self.db_filename.rstrip('.db')
         self.log_table_name = "spellbot2_log"
         self.tables = [self.master_table_name, self.log_table_name]
-        self.pending_queries = list()
+        self.pending_transactions = list()
         self.cursor = None
         if connect:
-            self.db = sqlite3.connect(self.db_filename)
-            self.cursor = self.db.cursor()
+            self._connect()
 
     def __len__(self):
         """
@@ -47,9 +46,27 @@ class SQLManager:
         all_data = self._query(f"SELECT * FROM {self.master_table_name}", fetch_results=True)
         return len(all_data)
     
+    def connect(self):
+        """
+        Opens connection to the SQLite3 database.
+        """
+        SDBLog.info(f'Initiating SQLite3 connection to {self.db_filename}')
+        self.db = sqlite3.connect(self.db_filename)
+        self.cursor = self.db.cursor()
+        SDBLog.info(f'Connection to {self.db_filename} established.')
+    
+    def disconnect(self):
+        """
+        Closes connection to the SQLite3 database.
+        """
+        SDBLog.info(f'Closing sqlite3 connection to {self.db_filename}')
+        self.db.close()
+        self.cursor = None
+        SDBLog.info(f'Connection closed.')
+    
     def _query(self, qry, commit=False, fetch=True, fetch_rows=0, timeme=True):
         """
-        Runs a query on the db
+        Runs a query on the SQLite3 database.
         :param qry: SQL query string to run
         :param commit: Whether to commit query
         :param fetch: Whether to return results after running query. Default True.
@@ -74,13 +91,11 @@ class SQLManager:
             SDBLog.debug(f"Query took {str(dt)} ms.")
 
         # add to pending queries list
-        self.pending_queries.append(qry)
+        self.pending_transactions.append(qry)
 
         # commit pending transactions to DB
         if commit:
-            self.db.commit()
-            # clear pending query list
-            self.pending_queries = list()
+            self.commit()
         
         # get query results
         if fetch:
@@ -94,11 +109,19 @@ class SQLManager:
                 # return all rows
                 return self.cursor.fetchall()
     
+    def commit(self):
+        """
+        Commits all transactions in pending_transactions to db (writes to disk)
+        """
+        SDBLog.info(f"Committing {len(self.pending_transactions)} pending transactions to database.")
+        self.db.commit()
+        self.pending_transactions = list()
+
     def _setup_columns(self):
         """
         Sets up initial database tables and columns.
         """
-        SDBLog.info("Setting up master table columns...") # make sure log table is created before this executes
+        SDBLog.info("Setting up columns in db master table") # make sure log table is created before this executes
     
     def _setup_logging_table(self):
         """

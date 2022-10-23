@@ -1,4 +1,5 @@
 from ..sql import SQLManager
+from ..config import ConfigManager
 from os import path
 import pytest
 
@@ -17,6 +18,19 @@ BASIC_TABLE_DATA_4 = ['Barioth', 'Psuedo-flying Wyvern', 5, ['Ice']]
 Note: This does not test the log table, see tests_logging.py
 """
 class TestsSQLManager:
+
+    @classmethod
+    def setup(cls):
+        """
+        Sets up the SQLManager instance to test.
+        """
+        cls.sqlm = SQLManager(connect=False, setup=False)
+
+    def test_sqlm_connect(self):
+        pass
+
+    def test_sqlm_disconnect(self):
+        pass
 
     def test_sqlm_create_basic_table(self):
         pass
@@ -47,3 +61,10 @@ class TestsSQLManager:
 
     def test_sqlm_commit_queries_master_table(self):
         pass
+    
+    def test_sqlm_query_time(self):
+        pass
+
+    @classmethod
+    def teardown(cls):
+        cls.sqlm.db.close()
