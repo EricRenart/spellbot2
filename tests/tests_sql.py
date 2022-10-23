@@ -26,7 +26,7 @@ class TestsSQLManager:
         """
         Sets up the SQLManager instance to test.
         """
-        cls.cm = ConfigManager(config_path='config_test.cfg')
+        cls.cm = ConfigManager(config_path=TEST_CONFIG_FILENAME_EXT)
         cls.sqlm = SQLManager(connect=False, setup=False)
 
     def test_sqlm_connect_disconnect(self):
