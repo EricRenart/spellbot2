@@ -1,4 +1,4 @@
-from ..log import SDBLog
+from ..log import SB2Log
 from os import path
 import pytest
 

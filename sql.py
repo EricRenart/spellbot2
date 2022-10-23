@@ -2,7 +2,7 @@ from datetime import datetime
 import sqlite3
 from typing_extensions import Self
 import config
-from log import SDBLog
+from log import SB2Log
 import datetime
 from utilities import Utilities as utils
 
@@ -50,19 +50,19 @@ class SQLManager:
         """
         Opens connection to the SQLite3 database.
         """
-        SDBLog.info(f'Initiating SQLite3 connection to {self.db_filename}')
+        SB2Log.info(f'Initiating SQLite3 connection to {self.db_filename}')
         self.db = sqlite3.connect(self.db_filename)
         self.cursor = self.db.cursor()
-        SDBLog.info(f'Connection to {self.db_filename} established.')
+        SB2Log.info(f'Connection to {self.db_filename} established.')
     
     def disconnect(self):
         """
         Closes connection to the SQLite3 database.
         """
-        SDBLog.info(f'Closing sqlite3 connection to {self.db_filename}')
+        SB2Log.info(f'Closing sqlite3 connection to {self.db_filename}')
         self.db.close()
         self.cursor = None
-        SDBLog.info(f'Connection closed.')
+        SB2Log.info(f'Connection closed.')
     
     def _query(self, qry, commit=False, fetch=True, fetch_rows=0, timeme=True):
         """
@@ -75,7 +75,7 @@ class SQLManager:
         :return: data rows, if fetch=True 
         """
         t1, t2, dt = None
-        SDBLog.debug(f"Executing SQL3 query on {self.db_filename}:\n{qry}\n")
+        SB2Log.debug(f"Executing SQL3 query on {self.db_filename}:\n{qry}\n")
 
         # mark start time
         if timeme:
@@ -88,7 +88,7 @@ class SQLManager:
         if timeme:
             t2 = datetime.datetime.now()
             dt = t2 - t1
-            SDBLog.debug(f"Query took {str(dt)} ms.")
+            SB2Log.debug(f"Query took {str(dt)} ms.")
 
         # add to pending queries list
         self.pending_transactions.append(qry)
@@ -113,7 +113,7 @@ class SQLManager:
         """
         Commits all transactions in pending_transactions to db (writes to disk)
         """
-        SDBLog.info(f"Committing {len(self.pending_transactions)} pending transactions to database.")
+        SB2Log.info(f"Committing {len(self.pending_transactions)} pending transactions to database.")
         self.db.commit()
         self.pending_transactions = list()
 
@@ -121,7 +121,7 @@ class SQLManager:
         """
         Sets up initial database tables and columns.
         """
-        SDBLog.info("Setting up columns in db master table") # make sure log table is created before this executes
+        SB2Log.info("Setting up columns in db master table") # make sure log table is created before this executes
     
     def _setup_logging_table(self):
         """

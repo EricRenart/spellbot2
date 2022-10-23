@@ -3,7 +3,7 @@ from sql import SQLManager
 from utilities import Utilities as utils
 import logging
 
-class SDBLog:
+class SB2Log:
 
     def _log_message(msg, level=logging.DEBUG, print_only=False, preamble=False):
         """
