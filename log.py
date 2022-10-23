@@ -31,20 +31,20 @@ class SB2Log:
     """
     Convenience functions
     """
-    def critical(self, msg):
-        self._log_message(msg, level=logging.CRITICAL)
+    def critical(self, msg, print_only=False, preamble=False):
+        self._log_message(msg, level=logging.CRITICAL, print_only=print_only, preamble=preamble)
 
-    def error(self, msg):
-        self._log_message(msg, level=logging.ERROR)
+    def error(self, msg, print_only=False, preamble=False):
+        self._log_message(msg, level=logging.ERROR, print_only=print_only, preamble=preamble)
     
-    def warning(self, msg):
-        self._log_message(msg, level=logging.WARNING)
+    def warning(self, msg, print_only=False, preamble=False):
+        self._log_message(msg, level=logging.WARNING, print_only=print_only, preamble=preamble)
     
-    def info(self, msg):
-        self._log_message(msg, level=logging.INFO)
+    def info(self, msg, print_only=False, preamble=False):
+        self._log_message(msg, level=logging.INFO, print_only=print_only, preamble=preamble)
     
-    def debug(self, msg):
-        self._log_message(msg, level=logging.DEBUG)
+    def debug(self, msg, print_only=False, preamble=False):
+        self._log_message(msg, level=logging.DEBUG, print_only=print_only, preamble=preamble)
     
     """
     Functions that retrieve data from logging db

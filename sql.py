@@ -3,6 +3,7 @@ import sqlite3
 from typing_extensions import Self
 import config
 from log import SB2Log
+import logging
 import datetime
 from utilities import Utilities as utils
 
@@ -37,7 +38,9 @@ class SQLManager:
         self.pending_transactions = list()
         self.cursor = None
         if connect:
-            self._connect()
+            self.connect()
+        if setup:
+            self.initial_setup()
 
     def __len__(self):
         """
@@ -117,18 +120,32 @@ class SQLManager:
         self.db.commit()
         self.pending_transactions = list()
 
-    def _setup_columns(self):
+    def initial_setup(self):
         """
         Sets up initial database tables and columns.
         """
-        SB2Log.info("Setting up columns in db master table") # make sure log table is created before this executes
+        self._setup_logging_table()
+        self._setup_master_table()
+
+    def _setup_master_table(self):
+        """
+        Sets up master spell table.
+        Make sure to call _setup_logging_table() before calling this!
+        """
+        # TODO: check in code if _setup_logging_table() has been called and throw error if it hasn't
+        SB2Log.info("Setting up master spell table")
+        self._query(f"CREATE TABLE {self.master_table_name} {utils.parenthesized_list(TABLE_COLUMNS)}")
+        SB2Log.info("Master spell table created.")
     
     def _setup_logging_table(self):
         """
         Sets up table for logging.
+        This function must be called before _setup_master_table().
         """
-        log_fields = utils.parenthesized_list(LOG_TABLE_COLUMNS)
-        self._query(f"CREATE TABLE {self.log_table_name} {log_fields}")
+        # can't log to table yet as it isn't set up
+        SB2Log.info("Setting up logging table", print_only=True)
+        self._query(f"CREATE TABLE {self.log_table_name} {utils.parenthesized_list(LOG_TABLE_COLUMNS)}")
+        SB2Log.info("Logging table created")
 
     def _add_log_message(self, msg, level):
         """
@@ -140,9 +157,9 @@ class SQLManager:
         valspair = utils.dict_to_sql_values_pair(msg_dict)
         self._query(f"INSERT INTO {self.log_table_name} {valspair}")
         
-    def _clear_log_table(self):
+    def _clear_logging_table(self):
         """
-        Drop logging table and re-creates it.
+        Drops logging table and re-creates it.
         """
         self._query(f"DROP TABLE {self.log_table_name}")
         self._setup_logging_table()
