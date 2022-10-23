@@ -51,10 +51,31 @@ class SQLManager:
         all_data = self._query(f"SELECT * FROM {self.master_table_name}", fetch_results=True)
         return len(all_data)
     
+    def add_table(self, table_name, cols_list):
+        """
+        Adds a custom table to this database.
+        :param table_name: Name of table to add
+        :param cols_list: List of column names for new table
+        """
+        self._query(f"CREATE TABLE {table_name} {utils.parenthesized_list(cols_list)}")
+
+        # add to tables list
+        self.tables.append(table_name)
+    
+    def drop_table(self, table_name):
+        """
+        Drops a custom table from this database.
+        :param table_name: Name of table to drop
+        """
+        self._query(f"DROP TABLE IF EXISTS {table_name}")
+
+        # remove from tables list
+        self.tables.remove(table_name)
+    
     def connect(self, db_filename=None):
         """
         Opens connection to the SQLite3 database.
-        :param db_filename: .db file to connect to. If None, uses default filename. Default None.
+        :param db_filename: .sqlite file to connect to. If None, uses default filename. Default None.
         """
 
         # use default filename if None
