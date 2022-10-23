@@ -4,8 +4,8 @@ from os import path
 import pytest
 
 TEST_CONFIG_FILENAME_EXT = 'config_test.cfg'
-TEST_SQLITE_FILENAME = 'spelldb2_test_'
-TEST_SQLITE_LOG_FILENAME = 'spelldb2_test_log_'
+TEST_SQLITE_FILENAME = 'spelldb2_test.sqlite'
+TEST_SQLITE_LOG_FILENAME = 'spelldb2_test_log.sqlite'
 TEST_CONFIG_PATH = path.join(path.dirname('tests'), TEST_CONFIG_FILENAME_EXT)
 
 BASIC_TABLE_NAME = 'spelldb2_test_monsters'

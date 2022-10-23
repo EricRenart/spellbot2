@@ -21,7 +21,7 @@ class SQLManager:
     def __init__(self,  db_filename=None, connect=True, setup=False, edition='5'):
         """
         Create a new instance of this SQL manager.
-        :param db_filename: Name of .db file to be created for database. If None, use default name. Default None.
+        :param db_filename: Name of .sqlite file to be created for database. If None, use default name. Default None.
         :param connect: Whether to connect to database upon creation. Default True.
         :param edition: D&D edition to read in spells for. Default 5. This will pull in spells from
         the relevant sources based on edition.
@@ -32,8 +32,8 @@ class SQLManager:
         self.edition = config.ConfigManager.get('spells','default_edition')
         if edition != '3.5' or '5':
             raise ValueError('D&D edition must be 3.5 or 5 in config file.')
-        self.db_filename = f"spellbot2_{self.edition}e.db"
-        self.master_table_name = self.db_filename.rstrip('.db')
+        self.db_filename = f"spellbot2_{self.edition}e.sqlite"
+        self.master_table_name = self.db_filename.rstrip('.sqlite')
         self.log_table_name = "spellbot2_log"
         self.tables = [self.master_table_name, self.log_table_name]
         self.pending_transactions = list()
