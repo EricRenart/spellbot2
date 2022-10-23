@@ -72,6 +72,32 @@ class SQLManager:
         # remove from tables list
         self.tables.remove(table_name)
     
+    def table_exists(self, table_name):
+        """
+        Tests whether the table with the specified name exists in the database.
+        :param table_name: Name of table to check
+        :return: True if table exists, False otherwise
+        """
+
+        # check both db AND self.tables
+        exists_in_db, exists_in_tables = False
+
+        # check sqlite database
+        qry = self._query(f"SELECT * FROM {table_name}", fetch=True)
+        if len(qry) > 0:
+            exists_in_db = True
+        
+        # check SQLM tables list
+        pop = self.tables.pop(table_name) # see if popping table_name returns data
+        if pop is not None:
+            exists_in_tables = True
+        self.tables.append(pop) # add popped table back into table list
+
+        if exists_in_db and exists_in_tables:
+            return True
+        else:
+            return False
+    
     def connect(self, db_filename=None):
         """
         Opens connection to the SQLite3 database.
