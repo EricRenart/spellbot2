@@ -1,6 +1,7 @@
 from ..sql import SQLManager
 from ..config import ConfigManager
 from os import path
+from ..utilities import Utilities as utils
 import pytest
 
 TEST_CONFIG_FILENAME_EXT = 'config_test.cfg'
@@ -29,6 +30,8 @@ class TestsSQLManager:
         cls.cm = ConfigManager(config_path=TEST_CONFIG_FILENAME_EXT)
         cls.sqlm = SQLManager(connect=False, setup=False)
 
+    # Connect/Disconnect Tests
+
     def test_sqlm_connect_disconnect(self):
         assert self.sqlm.connected == False
         self.sqlm.connect()
@@ -42,7 +45,7 @@ class TestsSQLManager:
 
     def test_sqlm_create_basic_table(self):
         # assert test table hasn't been created yet
-        pass
+        self.sqlm.drop_table()
 
     def test_sqlm_drop_basic_table(self):
         pass
@@ -72,6 +75,35 @@ class TestsSQLManager:
         pass
     
     def test_sqlm_query_time(self):
+        pass
+    
+    # Custom Tables
+    def test_sqlm_create_custom_table(self):
+        custom_table_name = f'test_sqlm_create_custom_table_{utils.datetime_string()}'
+        self.sqlm.drop_table(custom_table_name)
+
+        # test
+        self.sqlm.add_table(table_name=custom_table_name)
+
+        # check table existence
+        assert self.sqlm.table_exists(custom_table_name)
+
+        # cleanup
+        self.sqlm.drop_table(custom_table_name)
+
+    def test_sqlm_drop_custom_table(self):
+        custom_table_name = f'test_sqlm_drop_custom_table_{utils.datetime_string()}'
+        self.sqlm.drop_table(custom_table_name)
+
+        # create table, make sure it exists
+        self.sqlm.add_table(table_name=custom_table_name)
+        assert self.sqlm.table_exists(custom_table_name)
+
+        # drop table
+        self.sqlm.drop_table(custom_table_name)
+        assert not self.sqlm.table_exists(custom_table_name)
+
+    def test_sqlm_insert_custom_table(self):
         pass
 
     @classmethod

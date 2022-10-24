@@ -70,7 +70,8 @@ class SQLManager:
         self._query(f"DROP TABLE IF EXISTS {table_name}")
 
         # remove from tables list
-        self.tables.remove(table_name)
+        if table_name in self.tables:
+            self.tables.remove(table_name)
     
     def table_exists(self, table_name):
         """
@@ -83,7 +84,7 @@ class SQLManager:
         exists_in_db, exists_in_tables = False
 
         # check sqlite database
-        qry = self._query(f"SELECT * FROM {table_name}", fetch=True)
+        qry = self._query(f"""SELECT name FROM sqlite_master WHERE type='table' AND name='{table_name}'""", fetch=True)
         if len(qry) > 0:
             exists_in_db = True
         
