@@ -42,18 +42,58 @@ class TestsSQLManager:
         # make sure to connect to run following tests
         self.sqlm.connect()
         assert self.sqlm.connected == True
+    
+    def test_sqlm_create_basic_table_query(self):
+        tbln = f"test_sqlm_create_basic_table_query_{utils.datetime_string()}"
+        assert not self.sqlm.table_exists(tbln)
 
-    def test_sqlm_create_basic_table(self):
-        # assert test table hasn't been created yet
-        self.sqlm.drop_table()
+        # test
+        self.sqlm._query(f"CREATE TABLE {tbln}")
+        assert self.sqlm.table_exists(tbln)
+
+    def test_sqlm_create_basic_table(self):        
+        # create table
+        tbln = f"test_sqlm_create_basic_table_{utils.datetime_string()}"
+        assert not self.sqlm.table_exists(tbln)
+
+        # test
+        self.sqlm.add_table(tbln)
+        
+        # assert exists
+        assert self.sqlm.table_exists(tbln)
+
+    def test_sqlm_drop_basic_table_query(self):
+        tbln = f"test_sqlm_drop_basic_table_{utils.datetime_string()}"
+        self.sqlm.add_table(tbln)
+        assert self.sqlm.table_exists(tbln)
+
+        # test
+        self.sqlm._query(f"DROP TABLE {tbln}")
+        assert not self.sqlm.table_exists(tbln)
 
     def test_sqlm_drop_basic_table(self):
+        tbln = f"test_sqlm_drop_basic_table_{utils.datetime_string()}"
+        self.sqlm.add_table(tbln)
+        assert self.sqlm.table_exists(tbln)
+
+        # test
+        self.sqlm.drop_table(tbln)
+        assert not self.sqlm.table_exists(tbln)
+    
+    def test_sqlm_insert_basic_table_query(self):
+        tbln = f"test_sqlm_insert_basic_table_qry_{utils.datetime_string()}"
+        self.sqlm.add_table(tbln)
+        assert self.sqlm.table_exists(tbln)
+
+        # test
+        valpair = utils.dict_to_sql_values_pair(dict(BASIC_TABLE_DATA_COLS, BASIC_TABLE_DATA_1))
+        self.sqlm._query(f"INSERT INTO {tbln} {valpair}")
+        assert self.sqlm._query(f"SELECT * FROM {tbln}", fetch=True) == 
+    
+    def test_sqlm_insert_basic_table(self):
         pass
 
     def test_sqlm_clear_basic_table(self):
-        pass
-
-    def test_sqlm_insert_basic_table(self):
         pass
 
     def test_sqlm_commit_queries_basic_table(self):
@@ -76,36 +116,11 @@ class TestsSQLManager:
     
     def test_sqlm_query_time(self):
         pass
-    
-    # Custom Tables
-    def test_sqlm_create_custom_table(self):
-        custom_table_name = f'test_sqlm_create_custom_table_{utils.datetime_string()}'
-        self.sqlm.drop_table(custom_table_name)
 
-        # test
-        self.sqlm.add_table(table_name=custom_table_name)
-
-        # check table existence
-        assert self.sqlm.table_exists(custom_table_name)
-
-        # cleanup
-        self.sqlm.drop_table(custom_table_name)
-
-    def test_sqlm_drop_custom_table(self):
-        custom_table_name = f'test_sqlm_drop_custom_table_{utils.datetime_string()}'
-        self.sqlm.drop_table(custom_table_name)
-
-        # create table, make sure it exists
-        self.sqlm.add_table(table_name=custom_table_name)
-        assert self.sqlm.table_exists(custom_table_name)
-
-        # drop table
-        self.sqlm.drop_table(custom_table_name)
-        assert not self.sqlm.table_exists(custom_table_name)
-
-    def test_sqlm_insert_custom_table(self):
+    def test_sqlm_initial_setup(self):
         pass
 
     @classmethod
     def teardown(cls):
+        # TODO: delete all test tables
         cls.sqlm.db.close()
