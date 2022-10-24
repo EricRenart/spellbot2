@@ -5,14 +5,14 @@ import logging
 
 class SB2Log:
 
-    def _log_message(msg, level=logging.DEBUG, print_only=False, preamble=False):
+    def _log_message(msg, level=logging.DEBUG, print_only=False, preamble=True):
         """
         Logs a message to logging module at the given log level, inserts it into the
         logging table, and optionally appends a preamble with the current date and time.
         :param msg: Message to log
         :param level: Log level to use
         :param print_only: if True, only prints out log message without adding it to log table
-        :param preamble: Whether to append datetime to log message
+        :param preamble: Whether to append datetime to log message. Default True.
         """
 
         # Add preamble to log message for output
@@ -31,19 +31,19 @@ class SB2Log:
     """
     Convenience functions
     """
-    def critical(self, msg, print_only=False, preamble=False):
+    def critical(self, msg, print_only=False, preamble=True):
         self._log_message(msg, level=logging.CRITICAL, print_only=print_only, preamble=preamble)
 
-    def error(self, msg, print_only=False, preamble=False):
+    def error(self, msg, print_only=False, preamble=True):
         self._log_message(msg, level=logging.ERROR, print_only=print_only, preamble=preamble)
     
-    def warning(self, msg, print_only=False, preamble=False):
+    def warning(self, msg, print_only=False, preamble=True):
         self._log_message(msg, level=logging.WARNING, print_only=print_only, preamble=preamble)
     
-    def info(self, msg, print_only=False, preamble=False):
+    def info(self, msg, print_only=False, preamble=True):
         self._log_message(msg, level=logging.INFO, print_only=print_only, preamble=preamble)
     
-    def debug(self, msg, print_only=False, preamble=False):
+    def debug(self, msg, print_only=False, preamble=True):
         self._log_message(msg, level=logging.DEBUG, print_only=print_only, preamble=preamble)
     
     """
