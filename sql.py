@@ -85,7 +85,7 @@ class SQLManager:
 
         # check sqlite database
         qry = self._query(f"""SELECT name FROM sqlite_master WHERE type='table' AND name='{table_name}'""", fetch=True)
-        if len(qry) > 0:
+        if len(qry) > 0 and qry != None:
             exists_in_db = True
         
         # check SQLM tables list
