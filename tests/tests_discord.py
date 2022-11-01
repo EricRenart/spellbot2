@@ -1,4 +1,4 @@
-from ..discord import DiscordManager
+from ..discord_bot import DiscordManager
 from os import path
 import pytest
 
