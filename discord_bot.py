@@ -1,8 +1,9 @@
 from .log import SB2Log
 from .sql import SQLManager as sql
 from .config import ConfigManager as config
+from discord.ext import commands
 
-bot = Commands.Bot(command_prefix='!')
+bot = commands.Bot(command_prefix='!')
 
 class DiscordBot:
     def __init__(self, cfg_path='config.cfg') -> None:
