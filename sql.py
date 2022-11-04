@@ -40,8 +40,8 @@ class SQLManager:
 
         self.db_mode = config.ConfigManager.get('database','type')
         # Validate DB mode in config file
-        if not self.__validate_db_mode(db_mode):
-            SB2Log.warning(f"""{db_mode} is not a supported database mode. Defaulting to sqlite3 mode.
+        if not self.__validate_db_mode(self.db_mode):
+            SB2Log.warning(f"""{self.db_mode} is not a supported database mode. Defaulting to sqlite3 mode.
                             Please check your config.cfg file""")
             self.db_mode = 'sqlite3'
         self.log_table_name = "spellbot2_log"
