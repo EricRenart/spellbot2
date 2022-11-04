@@ -11,6 +11,10 @@ from utilities import Utilities as utils
 TABLE_COLUMNS = ['name','description','complete_description','components','range',
 'school','casting_time','target','duration','source','page']
 LOG_TABLE_COLUMNS = ['datetime','level','message']
+
+# todo: add MySQL/MariaDB support
+SUPPORTED_DB_MODES = ['sqlite3','postgresql']
+
 class SQLManager:
 
     """
@@ -18,22 +22,28 @@ class SQLManager:
     This class manages SQLite3 database instances for spelldb2
     """
 
-    def __init__(self,  db_filename=None, connect=True, setup=False, edition='5'):
+    def __init__(self, db_mode=None, db_filename=None, connect=True, setup=False, edition='5'):
         """
         Create a new instance of this SQL manager.
-        :param db_filename: Name of .sqlite file to be created for database. If None, use default name. Default None.
+        :param db_mode: Can be sqlite3 or postgresql. If postgresql, connect_params arg with credentials must be passed.
+        If sqlite3, db_filename must be passed. Defaults to sqlite3.
+        :param db_filename: (sqlite3 Only) Name of .sqlite file to be created for database. If None, use default name. Default None.
         :param connect: Whether to connect to database upon creation. Default True.
-        :param edition: D&D edition to read in spells for. Default 5. This will pull in spells from
-        the relevant sources based on edition.
-        Available values: 3.5, 5
         :param setup: Whether to load spell data and set up tables upon creation. Default True.
         :return: SQLManager instance
         """
         self.edition = config.ConfigManager.get('spells','default_edition')
+
+        # Validate D&D edition in config file
         if edition != '3.5' or '5':
             raise ValueError('D&D edition must be 3.5 or 5 in config file.')
-        self.db_filename = f"spellbot2_{self.edition}e.sqlite"
-        self.master_table_name = self.db_filename.rstrip('.sqlite')
+
+        self.db_mode = config.ConfigManager.get('database','type')
+        # Validate DB mode in config file
+        if not self.__validate_db_mode(db_mode):
+            SB2Log.warning(f"""{db_mode} is not a supported database mode. Defaulting to sqlite3 mode.
+                            Please check your config.cfg file""")
+            self.db_mode = 'sqlite3'
         self.log_table_name = "spellbot2_log"
         self.tables = [self.master_table_name, self.log_table_name]
         self.pending_transactions = list()
@@ -234,3 +244,8 @@ class SQLManager:
         """
         self._query(f"DROP TABLE {self.log_table_name}")
         self._setup_logging_table()
+
+    def __validate_db_mode(self, mode):
+        # todo: rewrite
+        if mode in ['sqlite3','postgresql']:
+            return True

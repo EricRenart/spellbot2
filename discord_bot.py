@@ -1,14 +1,15 @@
 from .log import SB2Log
+from .sql import SQLManager as sql
+from .config import ConfigManager as config
+
 bot = Commands.Bot(command_prefix='!')
 
 class DiscordBot:
-    def __init__(self, edition='5') -> None:
-        if edition == '3.5' or edition == '5':
-            self.edition = edition
-        else:
-            # use 5e as default edition and warn user
-            SB2Log.warning(f"Unrecognized edition {edition}. I currently support D&D 3.5e and 5e. Setting to 5th edition as default.")
-            self.edition = '5'
+    def __init__(self, cfg_path='config.cfg') -> None:
+        # Initialize app components
+        self.config = config.ConfigManager(config_path=cfg_path)
+        self.db = sql.SQLManager(connect=True)
+
 
     @bot.command(name='spell', description='Looks up given spell by name and displays info')
     def cmd_spell(self, ctx, spell_name):
@@ -30,4 +31,12 @@ class DiscordBot:
         """
         Queries the spell database to search for spells
         """
+        pass
+
+    @bot.command(name='dbmode', description='Changes database mode of the bot')
+    def cmd_config(self, ctx, arg):
+        """
+        Changes database mode from
+        """
+
         pass
